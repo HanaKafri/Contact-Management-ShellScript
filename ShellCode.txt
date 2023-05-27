@@ -1,0 +1,253 @@
+echo "Enter the name of the contact file":
+# save the name of the file (file) to use it in the code.
+read file
+
+if test -f "$file"
+then
+ #print the list
+ echo -e "\tMAIN MENU"
+ echo ======================
+ echo [1] Add a new Contact.
+ echo [2] List all Contacts.
+ echo [3] Search for Contact.
+ echo [4] Edit a Contact.
+ echo [5] Delete a Contact.
+ echo [6] Exit.
+ echo =====================
+ echo Enter the choice:
+
+ # save the user's choice in REPLY.
+ read REPLY
+
+# 6 = EXIT, so if the number is <= 5 (choices) enter
+
+while [ "$REPLY" -le 5 ]
+do
+ # compare the user's choice, to do the functions.
+
+  # Add a new Contact:
+  if [ "$REPLY" -eq 1 ]
+  then
+  
+  	echo "print the new contact: (press enter without entering a word if you don't want to enter data)" 
+  	#get each field alone
+  	
+  	echo first name:
+  	read fname
+  	
+  	echo last name:
+  	read lname
+  	
+  	echo phone number
+  	read pnum
+  	
+  	echo email
+  	read email
+  	
+  	# check if the input is null or not. if it is null it adds empty space, but if first name and phone number is null it asks user to re enter it, because it must not be empty.
+  	if [ -z "$lname" ]
+  	then
+		lname=" "  
+  	fi
+  	
+  	if [ -z "$email" ]
+  	then
+		email=" "  	
+  	fi
+
+  	if [ -z "$fname" ]
+  	then
+		echo you must insert the first name
+		read fname 	
+  	fi
+  	
+  	if [ -z "$pnum" ]
+  	then
+		echo you must insert the phone number
+		read pnum 	
+  	fi
+  	
+  	# print the phone number and the email on seperated files, to work on them alone.
+  	
+  	echo $pnum > tempNum.txt
+  	echo $email > tempEm.txt
+  	
+  	# to search for @ in the email
+  	e=$(grep -ci "@" tempEm.txt)
+  	# e != 0 means the data exists
+  	
+  	#to get number of digits in phone number
+  	num=$(grep -o [0-9] tempNum.txt | wc -c)
+	nn=$(expr $num / 2)
+	
+	# to check the phone number and the email
+	# number must be 9 or 10 numbers only, and the email must contain @.
+	if [ \( "$nn" -eq 9 -o "$nn" -eq 10 \) -a "$e" != 0 ]
+	then 
+		#print the new data in the contact file
+		echo "$fname, $lname, $pnum, $email" >> $file
+		
+		cat "$file"
+	else
+		echo "you can't add this contact"
+	fi
+ 
+  # List all Contacts:
+  elif [ "$REPLY" -eq 2 ]
+  then
+  
+  	# to remove the first line of the file (names of fields).
+	awk '(NR>1)' "$file" > tempL.txt
+  
+  	echo List contacts based on:
+  	echo 1. First Name.
+  	echo 2. Last Name.
+  	read list
+  	
+  	if [ "$list" -eq 1 ]
+  	then 
+  		# to sort the data based on the 1st column (first name)
+  		sort -k 1 tempL.txt > sorted.txt
+  		
+  	elif [ "$list" -eq 2 ]
+  	then
+  		# to sort the data based on the 2nd column (last name)
+  		sort -k 2 tempL.txt > sorted.txt
+  	fi
+  	
+	echo select a field to list:
+	echo [1] First name
+	echo [2] Last name
+	echo [3] Phone numbers
+	echo [4] Email
+	echo [5] All
+   
+	read field
+	
+	if [ "$field" -eq 1 ]
+	then 
+		echo First name:
+		awk -F ',' '{ print $1 }' sorted.txt
+    
+	elif [ "$field" -eq 2 ]
+	then 
+		echo Last name:
+		awk -F ',' '{ print $2 }' sorted.txt
+    
+	elif [ "$field" -eq 3 ]
+	then 
+		echo Phone numbers:
+		awk -F ',' '{ print $3 }' sorted.txt
+   
+	elif [ "$field" -eq 4 ]
+	then 
+		echo Email:
+		awk -F ',' '{ print $4 }' sorted.txt
+   
+	elif [ "$field" -eq 5 ]
+	then   
+		# to print all the data in the file.
+		echo Contacts:
+		cat sorted.txt
+		
+   	fi
+ 
+  # Search for a Contact:
+  elif [ "$REPLY" -eq 3 ]
+  then
+	
+	# remove the , and the duplicated spaces, so the user can search for combination field.
+	tr ',' ' ' < $file | tr -s ' ' > tempS
+	
+	echo "enter a word to search for (notice the capital and small letters)":
+	# save the word the user wanna search for in (word), 
+	# and search for it in the file.
+	read word
+   
+   
+	#search if the word exists in file
+	foundS=$(grep -ci "$word" tempS)
+  
+	# foundS != 0 means the data exists
+	if [ "$foundS" != 0 ]
+	then
+		grep "$word" tempS
+	else
+		echo contact not found
+	fi
+	
+  # Edit a Contact info:
+  elif [ "$REPLY" -eq 4 ]
+  then
+  
+  	#check if the contant is available to change it.
+  
+  	echo "Enter the name data you wanna replace:"
+	read old
+	
+  	foundR=$(grep -ci "$old" $file)
+  
+	# foundR != 0 means the data exists
+	if [ "$foundR" != 0 ]
+	then
+		echo Enter the new data:
+		read new
+		
+		# replace the old data with the new one.
+		
+		sed "s/$old/$new/g" "$file" > tempE.txt && mv tempE.txt "$file"
+		cat $file
+	else
+		echo contact not found
+	fi
+
+  # Delete a Contact:
+  elif [ "$REPLY" -eq 5 ]
+  then
+	echo Enter the contact you wanna delete:
+	read dataD
+
+	# search for the data if it exist, delete it, and overwrite it on tempD file,
+	# then copy the new data after the deletion into contacts file.
+	# note that grep -v returns the file with deleting the selected data.
+	
+	foundD=$(grep -ci "$dataD" tempS)
+  	# if data exists delet it.
+	if [ "$foundD" != 0 ]
+	then
+		grep -v "$dataD" $file > tempD.txt
+		cp tempD.txt $file
+		cat $file
+	else
+		echo contact not found
+	fi
+
+
+
+  #END OF THE FIRST CHOICE
+  fi
+
+  #continue printing the list (loop).
+
+ #print the list
+ echo -e "\tMAIN MENU"
+ echo =========================
+ echo [1] Add a new Contact.
+ echo [2] List all Contacts.
+ echo [3] Search for Contact.
+ echo [4] Edit a Contact.
+ echo [5] Delete a Contact.
+ echo [6] Exit.
+ echo ========================
+ echo Enter the choice:
+
+ # save the user's choice in REPLY.
+ read REPLY
+ 
+done 
+# end of the loop
+
+#if the file doesn't exists
+else
+  echo "'$file' doesn't exist..."
+fi

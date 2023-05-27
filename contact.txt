@@ -1,0 +1,5 @@
+First name, Last name, Phone number, email
+Aziz, Qaroush, 0599357111;092991111, aqaroush@birzeit.edu
+Ahmad, Khalil, 0569345673, khalil@gmail.com
+Hana, Kafri, 002546254, Hana@gmail.com
+Raghad, Samir, 123456357, Rhaghad@yahoo.com
